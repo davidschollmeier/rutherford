@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streuversuch &ndash; Rosinenkuchen oder Kern?</title>
+<style>
+  :root{
+    --ink:#0b1220;
+    --chamber:#070d18;
+    --screen:#12203a;
+    --gold:#f0b429;
+    --gold-soft:#f7d788;
+    --teal:#2f7d7b;
+    --teal-light:#5aa9a6;
+    --paper:#eef1f5;
+    --line:#c9d2dd;
+    --text:#1b2330;
+    --muted:#5b6878;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    padding:20px;
+  }
+  .wrap{max-width:1080px;margin:0 auto}
+  header{margin-bottom:18px}
+  h1{
+    font-size:clamp(1.4rem,2.6vw,2rem);
+    font-weight:600;
+    letter-spacing:-.01em;
+    margin:0 0 4px;
+  }
+  header p{margin:0;color:var(--muted);max-width:64ch}
+  .stage{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    gap:16px;
+    align-items:start;
+  }
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:14px;
+  }
+  .panel h2{
+    font-size:.95rem;
+    font-weight:600;
+    margin:0 0 10px;
+  }
+  .panel h2:not(:first-child){margin-top:18px}
+  fieldset{border:0;margin:0 0 14px;padding:0}
+  legend{font-size:.82rem;color:var(--muted);padding:0 0 6px}
+  .seg{display:flex;flex-direction:column;gap:6px}
+  .seg button{
+    text-align:left;
+    font:inherit;
+    font-size:.88rem;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:#fff;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .seg button:hover{border-color:var(--teal-light)}
+  .seg button[aria-pressed="true"]{
+    background:var(--teal);
+    border-color:var(--teal);
+    color:#fff;
+  }
+  .seg button small{display:block;font-size:.74rem;opacity:.75;font-weight:400}
+  label.slider{display:block;font-size:.82rem;color:var(--muted);margin-bottom:14px}
+  label.slider input{width:100%;margin-top:4px;accent-color:var(--teal)}
+  .act{
+    width:100%;font:inherit;font-size:.88rem;padding:9px 10px;margin-bottom:8px;
+    border:1px solid var(--teal);background:#fff;color:var(--teal);
+    border-radius:3px;cursor:pointer;
+  }
+  .act:hover{background:#eef6f5}
+  .act.primary{background:var(--teal);color:#fff}
+  .act.primary:hover{background:#28706e}
+  .chk{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+  .chk input{accent-color:var(--teal)}
+  .viewer{
+    background:var(--chamber);
+    border-radius:4px;
+    padding:10px;
+    border:1px solid #04070d;
+  }
+  canvas{display:block;width:100%;height:auto;border-radius:2px}
+  .readout{margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;background:#fff}
+  caption{
+    text-align:left;font-size:.9rem;font-weight:600;padding:0 0 8px;
+  }
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+  thead th{background:var(--ink);color:#fff;font-weight:600;font-size:.82rem}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;width:78px}
+  tfoot td{background:#f4f6f9;font-weight:600}
+  .bar{height:6px;background:#dfe5ec;border-radius:3px;overflow:hidden;margin-top:5px}
+  .bar span{display:block;height:100%;background:var(--gold);width:0;transition:width .3s}
+  .tasks{
+    margin-top:20px;background:#fff;border:1px solid var(--line);
+    border-left:4px solid var(--gold);border-radius:4px;padding:16px 18px;
+  }
+  .tasks h2{font-size:1rem;margin:0 0 8px}
+  .tasks ol{margin:0;padding-left:20px}
+  .tasks li{margin-bottom:7px;max-width:74ch}
+  footer{margin-top:22px;font-size:.78rem;color:var(--muted)}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  @media (max-width:820px){
+    body{padding:12px}
+    .stage{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Streuversuch &ndash; Rosinenkuchen oder Kern?</h1>
+  <p>Du schie&szlig;t Alphateilchen auf ein einzelnes Atom der Folie. Der Ring ist der
+     Leuchtschirm: Jeder Aufblitzer zeigt, wo ein Teilchen angekommen ist.</p>
+</header>
+
+<div class="stage">
+
+  <div class="panel">
+    <fieldset>
+      <legend>Atommodell</legend>
+      <div class="seg" id="modelSeg">
+        <button type="button" data-model="thomson" aria-pressed="true">
+          Rosinenkuchenmodell
+          <small>Ladung gleichm&auml;&szlig;ig verteilt</small>
+        </button>
+        <button type="button" data-model="kern" aria-pressed="false">
+          Kernmodell
+          <small>Ladung im Zentrum geb&uuml;ndelt</small>
+        </button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Folie</legend>
+      <div class="seg" id="foilSeg">
+        <button type="button" data-z="79" aria-pressed="true">Gold (Z = 79)</button>
+        <button type="button" data-z="13" aria-pressed="false">Aluminium (Z = 13)</button>
+      </div>
+    </fieldset>
+
+    <label class="slider">Teilchen pro Sekunde: <b id="rateOut">12</b>
+      <input type="range" id="rate" min="0" max="40" step="1" value="12">
+    </label>
+
+    <button class="act primary" id="shot">Ein Teilchen dicht am Zentrum</button>
+    <button class="act" id="reset">Z&auml;hler zur&uuml;cksetzen</button>
+
+    <label class="chk"><input type="checkbox" id="trails" checked> Spuren zeigen</label>
+  </div>
+
+  <div>
+    <div class="viewer">
+      <canvas id="cv" width="760" height="470" role="img"
+        aria-label="Streukammer: Alphateilchen treffen von links auf ein Atom und werden abgelenkt."></canvas>
+    </div>
+
+    <div class="readout">
+      <table>
+        <caption>Wo kommen die Teilchen an?</caption>
+        <thead>
+          <tr><th>Ablenkung</th><th class="num">Anzahl</th><th class="num">Anteil</th><th>Verteilung</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>fast geradeaus (unter 5&deg;)</td>
+            <td class="num" id="c0">0</td><td class="num" id="p0">&ndash;</td>
+            <td><div class="bar"><span id="b0"></span></div></td>
+          </tr>
+          <tr>
+            <td>abgelenkt (5&deg; bis 90&deg;)</td>
+            <td class="num" id="c1">0</td><td class="num" id="p1">&ndash;</td>
+            <td><div class="bar"><span id="b1"></span></div></td>
+          </tr>
+          <tr>
+            <td>zur&uuml;ckgestreut (&uuml;ber 90&deg;)</td>
+            <td class="num" id="c2">0</td><td class="num" id="p2">&ndash;</td>
+            <td><div class="bar"><span id="b2"></span></div></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr><td>gez&auml;hlte Teilchen</td><td class="num" id="ctot">0</td><td colspan="2"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="tasks">
+  <h2>Deine Aufgaben</h2>
+  <ol>
+    <li>Starte mit dem <b>Rosinenkuchenmodell</b>. Lass etwa 200 Teilchen laufen und
+        &uuml;bertrage die Z&auml;hlerst&auml;nde in die Tabelle auf AB 4.</li>
+    <li>Wechsle zum <b>Kernmodell</b> und wiederhole die Messung. Setze die Z&auml;hler vorher
+        zur&uuml;ck.</li>
+    <li>Schie&szlig;e mit der Schaltfl&auml;che <b>Ein Teilchen dicht am Zentrum</b>
+        mehrere Teilchen ab, die das Atomzentrum knapp verfehlen. Vergleiche die Bahnen in
+        beiden Modellen und beschreibe den Unterschied.</li>
+    <li>Vergleiche Gold und Aluminium bei gleicher Teilchenzahl. Formuliere, welchen Einfluss
+        die Kernladung hat.</li>
+    <li>Entscheide begr&uuml;ndet: Welches Modell passt zu Rutherfords Beobachtung, dass
+        einzelne Teilchen zur&uuml;ckgeworfen wurden?</li>
+  </ol>
+</div>
+
+<footer>
+  Vereinfachte Simulation f&uuml;r den Chemieunterricht der Jahrgangsstufe 9. Die Bahnen werden
+  aus der elektrischen Absto&szlig;ung berechnet; Gr&ouml;&szlig;en und Zeiten sind nicht
+  ma&szlig;st&auml;blich.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var cv = document.getElementById("cv");
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var CX = W * 0.56, CY = H / 2;      // Zentrum des Atoms
+  var R_ATOM = 132;                    // Radius der Atomhuelle
+  var R_SCREEN = 205;                  // Radius des Leuchtschirms
+  var V0 = 5;                          // Startgeschwindigkeit
+  var KZ_UNIT = 0.22;                  // Kopplung pro Kernladungszahl
+
+  var state = {
+    model: "thomson",
+    Z: 79,
+    rate: 12,
+    trails: true,
+    counts: [0, 0, 0]
+  };
+
+  var particles = [];
+  var flashes = [];
+  var emitAcc = 0;
+  var lastT = 0;
+
+  function kz(){ return KZ_UNIT * state.Z; }
+
+  // ---------------------------------------------------------------- Teilchen
+  function spawn(bFixed){
+    var b = (bFixed === undefined)
+      ? (Math.random() * 2 - 1) * R_ATOM
+      : bFixed;
+    particles.push({
+      x: -20, y: CY + b,
+      vx: V0, vy: 0,
+      trail: [],
+      entered: false,
+      done: false
+    });
+  }
+
+  function force(px, py){
+    var dx = px - CX, dy = py - CY;
+    var r2 = dx * dx + dy * dy;
+    var r = Math.sqrt(r2);
+    if (r < 0.4) r = 0.4, r2 = 0.16;
+    var f;
+    if (state.model === "kern"){
+      f = kz() / r2;                                   // Punktladung
+    } else {
+      if (r >= R_ATOM) f = kz() / r2;                  // au&szlig;erhalb der Kugel
+      else f = kz() * r / (R_ATOM * R_ATOM * R_ATOM);  // innerhalb: verteilte Ladung
+    }
+    return [f * dx / r, f * dy / r];
+  }
+
+  function step(p){
+    var dx = p.x - CX, dy = p.y - CY;
+    var r = Math.sqrt(dx * dx + dy * dy);
+    var sub = Math.min(400, Math.max(4, Math.round(400 / Math.max(r, 1))));
+    var dt = 1 / sub;
+    for (var i = 0; i < sub; i++){
+      var f = force(p.x, p.y);
+      p.vx += f[0] * dt;
+      p.vy += f[1] * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+    if (state.trails){
+      p.trail.push(p.x, p.y);
+      if (p.trail.length > 160) p.trail.splice(0, 2);
+    }
+  }
+
+  function classify(p){
+    var ang = Math.abs(Math.atan2(p.vy, p.vx)) * 180 / Math.PI;
+    if (ang < 5) return 0;
+    if (ang <= 90) return 1;
+    return 2;
+  }
+
+  function register(p){
+    var k = classify(p);
+    state.counts[k]++;
+    var dx = p.x - CX, dy = p.y - CY;
+    var a = Math.atan2(dy, dx);
+    flashes.push({ a: a, life: 1, k: k });
+    if (flashes.length > 220) flashes.shift();
+    refresh();
+  }
+
+  // -------------------------------------------------------------- Darstellung
+  function drawChamber(){
+    ctx.fillStyle = "#070d18";
+    ctx.fillRect(0, 0, W, H);
+
+    // Leuchtschirm als Ring
+    ctx.strokeStyle = "#12203a";
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.arc(CX, CY, R_SCREEN, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Aufblitzer auf dem Schirm
+    for (var i = 0; i < flashes.length; i++){
+      var fl = flashes[i];
+      var x = CX + Math.cos(fl.a) * R_SCREEN;
+      var y = CY + Math.sin(fl.a) * R_SCREEN;
+      var al = Math.max(0, fl.life);
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(247,215,136," + (al * 0.9) + ")";
+      ctx.arc(x, y, 2 + al * 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      fl.life -= 0.012;
+    }
+    while (flashes.length && flashes[0].life <= 0) flashes.shift();
+
+    // Atom
+    if (state.model === "thomson"){
+      var g = ctx.createRadialGradient(CX, CY, 6, CX, CY, R_ATOM);
+      g.addColorStop(0, "rgba(90,169,166,0.36)");
+      g.addColorStop(1, "rgba(90,169,166,0.06)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(CX, CY, R_ATOM, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(90,169,166,0.5)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(CX, CY, R_ATOM, 0, Math.PI * 2); ctx.stroke();
+      // Elektronen als "Rosinen"
+      ctx.fillStyle = "rgba(230,240,255,0.75)";
+      var seedAngles = [0.4,1.1,1.9,2.6,3.3,4.0,4.8,5.6,0.9,2.2,3.8,5.1];
+      for (var s = 0; s < seedAngles.length; s++){
+        var rr = R_ATOM * (0.3 + 0.6 * ((s * 37) % 100) / 100);
+        ctx.beginPath();
+        ctx.arc(CX + Math.cos(seedAngles[s]) * rr,
+                CY + Math.sin(seedAngles[s]) * rr, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.setLineDash([3, 5]);
+      ctx.strokeStyle = "rgba(90,169,166,0.35)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(CX, CY, R_ATOM, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      var gk = ctx.createRadialGradient(CX, CY, 0, CX, CY, 22);
+      gk.addColorStop(0, "rgba(240,180,41,0.95)");
+      gk.addColorStop(1, "rgba(240,180,41,0)");
+      ctx.fillStyle = gk;
+      ctx.beginPath(); ctx.arc(CX, CY, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#f0b429";
+      ctx.beginPath(); ctx.arc(CX, CY, 3.2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Quelle und Blende
+    ctx.fillStyle = "#243247";
+    ctx.fillRect(4, CY - 34, 26, 68);
+    ctx.fillStyle = "#f0b429";
+    ctx.beginPath(); ctx.arc(17, CY, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#243247";
+    ctx.fillRect(52, CY - 150, 9, 150 - R_ATOM);
+    ctx.fillRect(52, CY + R_ATOM, 9, 150 - R_ATOM);
+
+    ctx.fillStyle = "rgba(210,222,238,0.75)";
+    ctx.font = "12px Segoe UI, system-ui, sans-serif";
+    ctx.fillText("Alphastrahler", 6, CY - 44);
+    ctx.fillText("Blende", 44, CY - 158);
+    ctx.fillText(state.model === "kern" ? "Atom mit Kern" : "Atom nach Thomson",
+                 CX - 52, CY - R_ATOM - 12);
+    ctx.fillText("Leuchtschirm", CX + R_SCREEN - 96, CY - R_SCREEN + 26);
+  }
+
+  function drawParticles(){
+    for (var i = 0; i < particles.length; i++){
+      var p = particles[i];
+      if (state.trails && p.trail.length > 3){
+        ctx.strokeStyle = "rgba(240,180,41,0.32)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[0], p.trail[1]);
+        for (var j = 2; j < p.trail.length; j += 2) ctx.lineTo(p.trail[j], p.trail[j + 1]);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#f7d788";
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2.1, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // ------------------------------------------------------------------- Loop
+  function frame(t){
+    var dtms = lastT ? Math.min(60, t - lastT) : 16;
+    lastT = t;
+
+    emitAcc += state.rate * dtms / 1000;
+    while (emitAcc >= 1){ spawn(); emitAcc -= 1; }
+
+    for (var i = particles.length - 1; i >= 0; i--){
+      var p = particles[i];
+      step(p);
+      var dx = p.x - CX, dy = p.y - CY;
+      var rr2 = dx * dx + dy * dy;
+      if (rr2 < R_SCREEN * R_SCREEN) p.entered = true;
+      if (!p.done && p.entered && rr2 >= R_SCREEN * R_SCREEN){
+        register(p);
+        p.done = true;
+      }
+      if (p.done || p.x < -60 || p.x > W + 60 || p.y < -60 || p.y > H + 60){
+        particles.splice(i, 1);
+      }
+    }
+
+    drawChamber();
+    drawParticles();
+    requestAnimationFrame(frame);
+  }
+
+  // ------------------------------------------------------------------ Anzeige
+  function refresh(){
+    var tot = state.counts[0] + state.counts[1] + state.counts[2];
+    document.getElementById("ctot").textContent = tot;
+    for (var k = 0; k < 3; k++){
+      document.getElementById("c" + k).textContent = state.counts[k];
+      var pc = tot ? (state.counts[k] / tot * 100) : 0;
+      document.getElementById("p" + k).textContent =
+        tot ? (pc < 1 && pc > 0 ? pc.toFixed(1) : Math.round(pc)) + " %" : "\u2013";
+      document.getElementById("b" + k).style.width = (tot ? pc : 0) + "%";
+    }
+  }
+
+  function resetCounts(){
+    state.counts = [0, 0, 0];
+    flashes.length = 0;
+    refresh();
+  }
+
+  function bindSeg(id, attr, apply){
+    var seg = document.getElementById(id);
+    seg.addEventListener("click", function(e){
+      var b = e.target.closest("button");
+      if (!b) return;
+      var btns = seg.querySelectorAll("button");
+      for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-pressed", "true");
+      apply(b.getAttribute(attr));
+      resetCounts();
+    });
+  }
+
+  bindSeg("modelSeg", "data-model", function(v){ state.model = v; });
+  bindSeg("foilSeg", "data-z", function(v){ state.Z = parseInt(v, 10); });
+
+  document.getElementById("rate").addEventListener("input", function(){
+    state.rate = parseInt(this.value, 10);
+    document.getElementById("rateOut").textContent = state.rate;
+  });
+  document.getElementById("trails").addEventListener("change", function(){
+    state.trails = this.checked;
+  });
+  document.getElementById("shot").addEventListener("click", function(){
+    spawn((Math.random() * 2 - 1) * 5);
+  });
+  document.getElementById("reset").addEventListener("click", resetCounts);
+
+  refresh();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
